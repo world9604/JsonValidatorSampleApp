@@ -1,0 +1,116 @@
+plugins {
+    id 'com.android.application'
+}
+
+ext {
+    home = System.getenv('HOME')
+    keyStore = "E:\\develop\\pmapps-master\\keystore"
+}
+
+android {
+    namespace 'device.apps.jsonvalidatorsampleapp'
+    compileSdk 33
+
+    signingConfigs {
+        pointmobileconfig {
+            keyAlias 'platform'
+            keyPassword 'pointmobile_omap3pm'
+            storeFile file("${keyStore}/pointmobile.jks")
+            storePassword 'pointmobile_omap3pm'
+        }
+        androidConfig {
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storeFile file("${keyStore}/android.jks")
+            storePassword 'android'
+        }
+        janamConfig {
+            keyAlias 'platform'
+            keyPassword 'janamkey'
+            storeFile file("${keyStore}/janam.jks")
+            storePassword 'janamkey'
+        }
+        viewatPlatfrom {
+            keyAlias 'platform'
+            keyPassword 'pointmobile_omap3pm'
+            storeFile file("${keyStore}/pointmobile_pm500.jks")
+            storePassword 'pointmobile_omap3pm'
+        }
+    }
+
+    defaultConfig {
+        applicationId "device.apps.jsonvalidatorsampleapp"
+        minSdk 25
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.pointmobileconfig
+        }
+        debug{
+            signingConfig signingConfigs.pointmobileconfig
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    packagingOptions {
+        pickFirst 'META-INF/ASL-2.0.txt'
+        pickFirst 'draftv4/schema'
+        pickFirst 'draftv3/schema'
+        pickFirst 'META-INF/LICENSE'
+        pickFirst 'META-INF/LGPL-3.0.txt'
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+/*
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+ */
+}
+
+
+task releaseDeploy {
+    finalizedBy {
+        def name_prefix = "${rootProject.name}_${AppVersionName}"
+        def release_path = '../../apk'
+        def release_apk = "build/outputs/apk/release"
+        if (project.hasProperty("buildDate")) {
+            def buildDate = (new Date()).format('MMddHHmm')
+            name_prefix = "${name_prefix}_${buildDate}"
+        }
+
+        // APK 배포
+        task(deployApk, type: Copy) {
+            from "${release_apk}"
+            into "${release_path}"
+            rename('.*.apk', "${name_prefix}.apk")
+            include('**/*release.apk')
+        }
+    }
+}
+
+task releaseBuild(dependsOn: ['assembleRelease']) {
+}
+
+task release(dependsOn: ['clean', 'releaseBuild', 'releaseDeploy']) {
+    releaseBuild.mustRunAfter clean
+    releaseDeploy.mustRunAfter releaseBuild
+}
